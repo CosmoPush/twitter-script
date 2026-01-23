@@ -1,0 +1,5 @@
+# dotenv for working with .env files
+python-dotenv
+
+# Twikit from GitHub fork
+git+https://github.com/cmj/twikit.git@main#egg=twikit

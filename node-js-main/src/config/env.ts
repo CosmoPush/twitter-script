@@ -1,4 +1,5 @@
 import "dotenv/config";
+import ms, { type StringValue } from "ms";
 import { z } from "zod";
 
 /**
@@ -10,8 +11,17 @@ const envSchema = z.object({
     .enum(["development", "test", "production"])
     .default("development"),
 
+  GET_USER_TWEETS_INTERVAL: z
+    .custom<StringValue>()
+    .default("30m")
+    .refine((v) => typeof ms(v) === "number", {
+      message: "Invalid duration format",
+    }),
+
+  MAX_PYTHON_PROCESSES: z.coerce.number().default(2),
+
   TARGET_USER: z.string(),
-  TARGET_TWIT_ID: z.string(),
+  MAX_USER_TWEETS: z.coerce.number().default(10),
 
   DATABASE_URL: z.url(),
 });

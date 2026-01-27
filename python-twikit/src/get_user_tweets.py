@@ -37,7 +37,7 @@ async def main():
     )
     
     try:
-        tweets = await client.get_user_tweets(user.id, "Tweets")
+        tweets = await client.get_user_tweets(user.id, tweet_type="Tweets")
     except Exception as e:
         print(
             f"[ERROR] Failed to fetch tweets for user {user.id}: {e}",

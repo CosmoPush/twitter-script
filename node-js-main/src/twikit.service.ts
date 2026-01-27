@@ -1,6 +1,6 @@
 import type { TweetResponseDTO } from "./dto/tweet.dto.js";
 import type { UserDTO } from "./dto/user.dto.js";
-import runPythonScript from "./runPythonScript.js";
+import runPythonScript from "./utils/runPythonScript.util.js";
 
 class TwikitService {
   private async timedCall<T>(script: string, ...args: any[]): Promise<T> {

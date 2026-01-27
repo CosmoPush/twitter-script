@@ -1,18 +1,15 @@
-import { twikitService } from "./twikit.service.js";
-import { databaseEmitter, databaseService } from "./database.service.js";
-import { prisma } from "./prisma/index.js";
-import type { TweetDTO } from "./dto/tweet.dto.js";
-import timeAgo from "./utils/timeAgo.util.js";
+import ms from "ms";
 import { env } from "./config/env.js";
+import { databaseEmitter } from "./database.service.js";
+import type { TweetDTO } from "./dto/tweet.dto.js";
 import type { UserDTO } from "./dto/user.dto.js";
+import { timelineScraper } from "./timelineScraper.js";
+import timeAgo from "./utils/timeAgo.util.js";
 import { truncateText } from "./utils/truncateText.util.js";
 
 (async () => {
   try {
     console.log("[BOOT] Application startup");
-
-    const targetTwitId = env.TARGET_TWIT_ID;
-    console.log("[CONFIG] Target tweet id:", targetTwitId);
 
     const onCreateUser = (user: UserDTO) => {
       console.log(
@@ -28,25 +25,16 @@ import { truncateText } from "./utils/truncateText.util.js";
         "[DB] Tweet created",
         `id=${tweet.id}`,
         `time=${time}`,
-        `text="${truncateText(tweet.text)}"`,
+        `text="${truncateText(tweet.text, 100)}"`,
       );
     };
 
     databaseEmitter.on("user:created", onCreateUser);
     databaseEmitter.on("tweet:created", onCreateTweet);
 
-    console.log("[SCRAPE] Fetching tweet replies");
-    const result = await twikitService.getTweetReplies(targetTwitId);
-    console.log("[SCRAPE] Replies fetched:", result.tweets.length);
-
-    const s = performance.now();
-    console.log("[DB] Persisting tweets to database");
-    await databaseService.saveOrUpdateManyTweets(result.tweets);
-    const d = performance.now() - s;
-    console.log("[DB] Persistence completed in", d.toFixed(0), "ms");
-
-    await prisma.$disconnect();
-    console.log("[SHUTDOWN] Application finished");
+    const interval = ms(env.GET_USER_TWEETS_INTERVAL);
+    console.log(interval);
+    timelineScraper.run(interval);
   } catch (e) {
     console.error("[FATAL] Unhandled error:", e);
   }

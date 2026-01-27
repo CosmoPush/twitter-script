@@ -55,10 +55,18 @@ class DatabaseService {
     } catch (e: any) {
       // tweet already exists → update
       if (e.code === "P2002") {
-        return await prisma.tweet.update({
-          where: { id: tweet.id },
-          data: commonData,
-        });
+        try {
+          return await prisma.tweet.update({
+            where: { id: tweet.id },
+            data: commonData,
+          });
+        } catch (e: any) {
+          // FK violation → parent not yet in the database
+          return await prisma.tweet.update({
+            where: { id: tweet.id },
+            data: { ...commonData, in_reply_to_fk: null },
+          });
+        }
       }
 
       throw e;
@@ -72,6 +80,24 @@ class DatabaseService {
 
   async saveOrUpdateManyTweets(tweets: TweetResponseDTO[]) {
     return await Promise.all(tweets.map((t) => this.saveOrUpdateTweet(t)));
+  }
+
+  async linkReplyTweets() {
+    const result = await prisma.$executeRawUnsafe(`
+      UPDATE "Tweet" t
+      SET "in_reply_to_fk" = t."in_reply_to"
+      FROM "Tweet" parent
+      WHERE
+        t."in_reply_to_fk" IS NULL
+        AND t."in_reply_to" IS NOT NULL
+        AND parent."id" = t."in_reply_to"
+    `);
+
+    return result;
+  }
+
+  async getTwitById(id: string) {
+    return await prisma.tweet.findUnique({ where: { id } });
   }
 }
 

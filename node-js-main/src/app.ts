@@ -33,7 +33,6 @@ import { truncateText } from "./utils/truncateText.util.js";
     databaseEmitter.on("tweet:created", onCreateTweet);
 
     const interval = ms(env.GET_USER_TWEETS_INTERVAL);
-    console.log(interval);
     timelineScraper.run(interval);
   } catch (e) {
     console.error("[FATAL] Unhandled error:", e);

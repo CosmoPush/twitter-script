@@ -9,8 +9,8 @@ from utils.truncate_text import truncate_text
 client = Client(language="en-US")
 client.load_cookies("cookies.json")
 
-REQUEST_DELAY = 4     # seconds between requests
-MAX_DEPTH = 10        # maximum recursion depth to avoid infinite threads
+REQUEST_DELAY = 2     # seconds between requests
+MAX_DEPTH = 3        # maximum recursion depth to avoid infinite threads
 MAX_RETRIES = 7       # retries for 429 errors
 
 async def safe_get_tweet(tweet_id: str, retries=MAX_RETRIES):

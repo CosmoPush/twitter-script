@@ -6,6 +6,10 @@ datasource db {
   provider = "postgresql"
 }
 
+model TargetUser {
+  screen_name String @id
+}
+
 model User {
   id              String   @id // Twitter ID as a string
   screen_name     String   @unique

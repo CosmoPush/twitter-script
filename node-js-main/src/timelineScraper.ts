@@ -3,6 +3,7 @@ import { env } from "./config/env.js";
 import { twikitService } from "./twikit.service.js";
 import { databaseService } from "./database.service.js";
 import { truncateText } from "./utils/truncateText.util.js";
+import type { TweetResponseDTO } from "./dto/tweet.dto.js";
 
 const queue = new PQueue({
   concurrency: env.MAX_PYTHON_PROCESSES, // maximum Python processes simultaneously
@@ -11,55 +12,38 @@ const queue = new PQueue({
   carryoverConcurrencyCount: true,
 });
 
-class TimelineScraper {
-  interval: NodeJS.Timeout | null = null;
+export default class TimelineScraper {
+  targetUser: string;
   private isRunning = false;
 
-  run(time = 1000 * 60 * 60) {
-    this.fetch();
-    this.interval = setInterval(() => this.fetch(), time);
+  constructor(targetUser: string) {
+    this.targetUser = targetUser;
   }
 
-  stop() {
-    this.interval && clearInterval(this.interval);
-  }
+  stop() {}
 
   async fetch() {
     if (this.isRunning) {
-      console.warn("[WARN] Fetch skipped: previous cycle still running");
+      console.warn(`[SKIP] ${this.targetUser} already running`);
       return;
     }
 
     this.isRunning = true;
 
     try {
-      console.log("[BOOT] Fetching user tweets");
+      console.log(`[BOOT] Fetching tweets for ${this.targetUser}`);
 
-      const resultUser = await twikitService.getUserTweets(env.TARGET_USER);
-
+      const resultUser = await twikitService.getUserTweets(this.targetUser);
       const tweets = resultUser.tweets.slice(0, env.MAX_USER_TWEETS);
 
       console.log(
-        `[INFO] Loaded ${tweets.length} tweets for ${env.TARGET_USER}`,
+        `[INFO] Loaded ${tweets.length} tweets for ${this.targetUser}`,
       );
 
       for (const tweet of tweets) {
         queue.add(async () => {
           try {
-            console.log(
-              `${"=".repeat(40)} [SCRAPE] Fetching replies for tweet ${tweet.id} ${truncateText(tweet.text, 100)}`,
-            );
-
-            const result = await twikitService.getTweetReplies(tweet.id);
-
-            console.log(
-              `${"=".repeat(40)} [SCRAPE] Done tweet ${tweet.id} ${truncateText(tweet.text, 100)}, replies=${result.tweets.length}`,
-            );
-
-            await databaseService.saveOrUpdateManyTweets(result.tweets);
-
-            const linked = await databaseService.linkReplyTweets();
-            console.log(`[DB] Linked ${linked} reply tweets`);
+            await this.processTweet(tweet);
           } catch (e) {
             console.error("[FATAL] Queue fetching failed", e);
           }
@@ -67,16 +51,29 @@ class TimelineScraper {
       }
 
       await queue.onIdle();
-      console.log("[INFO] Queue is idle, fetch cycle done");
-
-      const linked = await databaseService.linkReplyTweets();
-      console.log(`[DB] Linked ${linked} reply tweets`);
+      await databaseService.linkReplyTweets();
+      console.log(`[DONE] ${this.targetUser}`);
     } catch (e) {
-      console.error("[FATAL] Fetch cycle failed", e);
+      console.error(`[ERROR] ${this.targetUser}`, e);
     } finally {
       this.isRunning = false;
     }
   }
-}
 
-export const timelineScraper = new TimelineScraper();
+  async processTweet(tweet: TweetResponseDTO) {
+    console.log(
+      `${"=".repeat(20)} [SCRAPE] Fetching replies for tweet ${tweet.id} ${truncateText(tweet.text, 100)}`,
+    );
+
+    const result = await twikitService.getTweetReplies(tweet.id);
+
+    console.log(
+      `${"=".repeat(20)} [SCRAPE] Done tweet ${tweet.id} ${truncateText(tweet.text, 100)}, replies=${result.tweets.length}`,
+    );
+
+    await databaseService.saveOrUpdateManyTweets(result.tweets);
+
+    const linked = await databaseService.linkReplyTweets();
+    console.log(`[DB] Linked ${linked} reply tweets`);
+  }
+}

@@ -96,6 +96,10 @@ class DatabaseService {
     return result;
   }
 
+  async getTargetUsers() {
+    return await prisma.targetUser.findMany();
+  }
+
   async getTwitById(id: string) {
     return await prisma.tweet.findUnique({ where: { id } });
   }

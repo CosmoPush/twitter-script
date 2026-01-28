@@ -19,8 +19,6 @@ const envSchema = z.object({
     }),
 
   MAX_PYTHON_PROCESSES: z.coerce.number().default(2),
-
-  TARGET_USER: z.string(),
   MAX_USER_TWEETS: z.coerce.number().default(10),
 
   DATABASE_URL: z.url(),

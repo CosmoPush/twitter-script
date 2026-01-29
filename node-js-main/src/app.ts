@@ -1,25 +1,24 @@
-import ms from "ms";
+import express from "express";
 import { env } from "./config/env.js";
-import { runScrapingCycle } from "./scrapingScheduler.js";
+import { targetUsersController } from "./targetUsers/targetUsers.controller.js";
+import { errorMiddleware } from "./middlewares/errorMiddleware.js";
+import { scrapperController } from "./scrapper/scrapper.controller.js";
 
-(async function bootstrap() {
-  console.log("[BOOT] Application startup");
+const PORT = env.PORT;
+const app = express();
 
-  const interval = ms(env.GET_USER_TWEETS_INTERVAL);
+app.use(express.json());
 
-  while (true) {
-    const startedAt = Date.now();
+app.post("/target-users", targetUsersController.create);
+app.patch("/target-users/:screen_name", targetUsersController.update);
+app.delete("/target-users", targetUsersController.deleteMany);
+app.get("/target-users", targetUsersController.getAll);
 
-    try {
-      await runScrapingCycle();
-    } catch (e) {
-      console.error("[FATAL] Scraping cycle failed", e);
-    }
+app.post("/start", scrapperController.start);
+app.post("/stop", scrapperController.stop);
 
-    const elapsed = Date.now() - startedAt;
-    const sleepTime = Math.max(interval - elapsed, 0);
+app.use(errorMiddleware);
 
-    console.log(`[SCHEDULER] Sleeping ${ms(sleepTime)}`);
-    await new Promise((r) => setTimeout(r, sleepTime));
-  }
-})();
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});

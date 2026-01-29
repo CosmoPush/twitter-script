@@ -11,6 +11,8 @@ const envSchema = z.object({
     .enum(["development", "test", "production"])
     .default("development"),
 
+  PORT: z.coerce.number().default(4000),
+
   GET_USER_TWEETS_INTERVAL: z
     .custom<StringValue>()
     .default("30m")

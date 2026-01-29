@@ -1,9 +1,9 @@
 import PQueue from "p-queue";
-import { env } from "./config/env.js";
+import { env } from "../config/env.js";
 import { twikitService } from "./twikit.service.js";
-import { databaseService } from "./database.service.js";
-import { truncateText } from "./utils/truncateText.util.js";
-import type { TweetResponseDTO } from "./dto/tweet.dto.js";
+import { databaseService } from "../database.service.js";
+import type { TweetResponseDTO } from "../dto/tweet.dto.js";
+import { truncateText } from "../utils/truncateText.util.js";
 
 const queue = new PQueue({
   concurrency: env.MAX_PYTHON_PROCESSES, // maximum Python processes simultaneously

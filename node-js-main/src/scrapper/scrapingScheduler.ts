@@ -1,4 +1,4 @@
-import { databaseService } from "./database.service.js";
+import { databaseService } from "../database.service.js";
 import { syncScrapers } from "./scraperRegistry.js";
 
 export async function runScrapingCycle() {

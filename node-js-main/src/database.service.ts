@@ -26,7 +26,7 @@ class DatabaseService {
     }
   }
 
-  async upsertTweet(tweet: TweetResponseDTO) {
+  private async upsertTweet(tweet: TweetResponseDTO) {
     const commonData = {
       ...tweet,
       user: undefined,

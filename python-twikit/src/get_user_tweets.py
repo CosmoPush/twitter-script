@@ -46,7 +46,7 @@ async def main():
         sys.exit(1)
 
     print(
-        f"[INFO] Tweets fetched for user {user.id}: {len(tweets)}",
+        f"[INFO] Tweets fetched for user {user.screen_name} {user.id}: {len(tweets)}",
         file=sys.stderr,
     )
 
